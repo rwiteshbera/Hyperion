@@ -15,15 +15,15 @@ const (
 )
 
 type Wallet struct {
-	privateKey    *ecdsa.PrivateKey
-	publicKey     *ecdsa.PublicKey
-	walletAddress string
+	PrivateKey    *ecdsa.PrivateKey
+	PublicKey     *ecdsa.PublicKey
+	WalletAddress string
 }
 
 /*
 	Generate ECDSA New Private Key (32bytes) - Public-Key (64bytes) Pair
 
-Return : privateKey(ecdsa.PrivateKey), PublicKey(ecdsa.PublicKey)
+Return : PrivateKey(ecdsa.PrivateKey), PublicKey(ecdsa.PublicKey)
 */
 func generateNewKeyPair() (ecdsa.PrivateKey, ecdsa.PublicKey) {
 	curve := elliptic.P256()
