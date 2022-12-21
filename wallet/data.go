@@ -1,6 +1,13 @@
 package wallet
 
-const path = "./wallets.data"
+import (
+	"encoding/json"
+	"log"
+	"os"
+)
+
+const filepath = "./wallet/temp/wallets.json"
+const path = "./wallet/temp"
 
 type Wallets struct {
 	Wallets map[string]*Wallet
@@ -47,10 +54,32 @@ func (w *Wallets) GetAllAddresses() []string {
 
 // Loading the wallets from the file.
 func (w *Wallets) loadFile() error {
+	contents, err := os.ReadFile(filepath)
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(contents, &w)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 // Saving the wallets to a file.
 func (w *Wallets) SaveFile() {
+	m, err := json.Marshal(w)
+	if err != nil {
+		log.Panic(err)
+	}
 
+	err = os.MkdirAll(path, 0755)
+	if err != nil {
+		log.Panic(err)
+	}
+	err = os.WriteFile(filepath, m, 0644)
+	if err != nil {
+		log.Panic(err)
+	}
 }
