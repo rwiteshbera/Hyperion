@@ -9,27 +9,27 @@ type Blockchain struct {
 }
 
 type Block struct {
-	BlockNumber  int
-	Nonce        int
-	Data         []byte
-	Hash         []byte
-	PreviousHash []byte
-	TimeStamp    int64
+	BlockNumber         int
+	Nonce               int
+	TransactionsInBlock []Transaction
+	Hash                []byte
+	PreviousHash        []byte
+	TimeStamp           int64
 }
 
 // Create New Block
-func CreateBlock(NewBlockNumber int, data string, previousHash []byte) *Block {
+func createBlock(NewBlockNumber int, transactionsData []Transaction, previousHash []byte) *Block {
 	block := &Block{
-		BlockNumber:  NewBlockNumber,
-		Nonce:        0,
-		Data:         []byte(data),
-		Hash:         []byte{},
-		PreviousHash: previousHash,
-		TimeStamp:    time.Now().Unix(),
+		BlockNumber:         NewBlockNumber,
+		Nonce:               0,
+		TransactionsInBlock: transactionsData,
+		Hash:                []byte{},
+		PreviousHash:        previousHash,
+		TimeStamp:           time.Now().Unix(),
 	}
-	proofOfWork := NewProof(block)
+	proofOfWork := newProof(block)
 
-	nonce, hash := proofOfWork.Run()
+	nonce, hash := proofOfWork.run()
 
 	block.Nonce = nonce
 	block.Hash = hash[:]
@@ -37,17 +37,17 @@ func CreateBlock(NewBlockNumber int, data string, previousHash []byte) *Block {
 }
 
 // Add New Block to the chain
-func (blockchain *Blockchain) AddBlock(data string) {
+func (blockchain *Blockchain) AddBlock(transactionsData []Transaction, minerAddress string) {
 	previousBlock := blockchain.Blocks[len(blockchain.Blocks)-1]
 	NewBlockNumber := len(blockchain.Blocks) + 1
-	NewBlock := CreateBlock(NewBlockNumber, data, previousBlock.Hash)
+	NewBlock := createBlock(NewBlockNumber, transactionsData, previousBlock.Hash)
 	blockchain.Blocks = append(blockchain.Blocks, NewBlock)
 }
 
 // Build The First Block // Genesis Block
 // https://en.bitcoin.it/wiki/Genesis_block
 func Genesis() *Block {
-	return CreateBlock(1, "Genesis", []byte{})
+	return createBlock(1, []Transaction{}, []byte{})
 }
 
 /*

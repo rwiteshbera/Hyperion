@@ -10,7 +10,7 @@ import (
 
 Return: type: Wallet 'struct'
 */
-func CreateWallet() *Wallet {
+func CreateWallet(b float32) *Wallet {
 	// Generate ECDSA New Private Key (32bytes) - Public-Key (64bytes) Pair
 	private, public := generateNewKeyPair()
 
@@ -29,7 +29,7 @@ func CreateWallet() *Wallet {
 	// Encode byte string to base58
 	wallet_addr := base58Encode(fullHash)
 
-	w := Wallet{PrivateKey: &private, PublicKey: &public, WalletAddress: string(wallet_addr)}
+	w := Wallet{PrivateKey: &private, PublicKey: &public, WalletAddress: string(wallet_addr), Balance: b}
 
 	return &w
 }
@@ -57,6 +57,8 @@ func (w *Wallet) GetKeyValuePairInString() (string, string) {
 
 Return: Wallet-Address (string)
 */
-func (w *Wallet) GetWalletAddress() string {
-	return w.WalletAddress
+
+// A function that returns the balance of the wallet.
+func (w *Wallet) GetBalance() float32 {
+	return w.Balance
 }

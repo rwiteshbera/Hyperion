@@ -6,8 +6,10 @@ import (
 	"os"
 )
 
-const filepath = "./wallet/temp/wallets.json"
-const path = "./wallet/temp"
+const filename = "wallets.json" // filename + extension
+
+// Add '/' after adding the path
+const path = "./wallet/temp/"
 
 type Wallets struct {
 	Wallets map[string]*Wallet
@@ -21,7 +23,7 @@ func InitWallets() (*Wallets, error) {
 }
 
 func (wallets *Wallets) AddWallet() string {
-	wallet := CreateWallet()
+	wallet := CreateWallet(0)
 	wallets.Wallets[wallet.WalletAddress] = wallet
 	return wallet.WalletAddress
 }
@@ -54,6 +56,8 @@ func (w *Wallets) GetAllAddresses() []string {
 
 // Loading the wallets from the file.
 func (w *Wallets) loadFile() error {
+	filepath := path + filename
+
 	contents, err := os.ReadFile(filepath)
 	if err != nil {
 		return err
@@ -69,6 +73,8 @@ func (w *Wallets) loadFile() error {
 
 // Saving the wallets to a file.
 func (w *Wallets) SaveFile() {
+	filepath := path + filename
+
 	m, err := json.Marshal(w)
 	if err != nil {
 		log.Panic(err)
@@ -78,6 +84,7 @@ func (w *Wallets) SaveFile() {
 	if err != nil {
 		log.Panic(err)
 	}
+
 	err = os.WriteFile(filepath, m, 0644)
 	if err != nil {
 		log.Panic(err)

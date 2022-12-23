@@ -18,6 +18,7 @@ type Wallet struct {
 	PrivateKey    *ecdsa.PrivateKey
 	PublicKey     *ecdsa.PublicKey
 	WalletAddress string
+	Balance       float32
 }
 
 /*
