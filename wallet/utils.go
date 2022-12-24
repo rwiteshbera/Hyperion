@@ -1,6 +1,8 @@
 package wallet
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
@@ -59,8 +61,41 @@ func base58Encode(publicKeyHash []byte) []byte {
 	return []byte(base58PubKey)
 }
 
-// Decode byte string to base58
-// func base58Decode(input []byte) []byte {
-// 	decode := base58.Decode(string(input))
-// 	return decode
-// }
+func encryptWalletData(key []byte, plaintext []byte) ([]byte, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	// Generate a random initialization vector.
+	iv := make([]byte, aes.BlockSize)
+	if _, err := rand.Read(iv); err != nil {
+		return nil, err
+	}
+
+	// Encrypt the plaintext using AES in CTR mode.
+	stream := cipher.NewCTR(block, iv)
+	ciphertext := make([]byte, len(plaintext))
+	stream.XORKeyStream(ciphertext, plaintext)
+
+	// Concatenate the initialization vector and ciphertext into a single byte slice.
+	encrypted := append(iv, ciphertext...)
+	return encrypted, nil
+}
+
+func decryptWalletData(key []byte, encrypted []byte) ([]byte, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	// Split the encrypted byte slice into the initialization vector and ciphertext.
+	iv, ciphertext := encrypted[:aes.BlockSize], encrypted[aes.BlockSize:]
+
+	// Decrypt the ciphertext using AES in CTR mode.
+	stream := cipher.NewCTR(block, iv)
+	plaintext := make([]byte, len(ciphertext))
+	stream.XORKeyStream(plaintext, ciphertext)
+
+	return plaintext, nil
+}

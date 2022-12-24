@@ -1,9 +1,6 @@
 package wallet
 
 import (
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/rand"
 	"encoding/json"
 	"log"
 	"os"
@@ -27,8 +24,7 @@ func InitWallets() (*Wallets, error) {
 	return &wallets, err
 }
 
-func (wallets *Wallets) AddWallet() string {
-	wallet := CreateWallet(0)
+func (wallets *Wallets) AddWallet(wallet *Wallet) string {
 	wallets.Wallets[wallet.WalletAddress] = wallet
 	return wallet.WalletAddress
 }
@@ -44,23 +40,24 @@ func LoadWallets() (*Wallets, error) {
 }
 
 // Returning a wallet from the wallets map.
-func (w *Wallets) GetWallet(address string) Wallet {
-	return *w.Wallets[address]
+func (wallets *Wallets) GetWallet(address string) Wallet {
+	return *wallets.Wallets[address]
 }
 
-// Getting all the addresses from the wallets.
-func (w *Wallets) GetAllAddresses() []string {
+// Getting all the addresses from  wallets.
+func (wallets *Wallets) GetAllAddresses() []string {
 	var addresses []string
 
-	for address := range w.Wallets {
+	for address := range wallets.Wallets {
 		addresses = append(addresses, address)
+
 	}
 
 	return addresses
 }
 
 // Loading the wallets from the file.
-func (w *Wallets) loadFile() error {
+func (wallets *Wallets) loadFile() error {
 	filepath := path + filename
 
 	contents, err := os.ReadFile(filepath)
@@ -73,7 +70,7 @@ func (w *Wallets) loadFile() error {
 		log.Panic(err1)
 	}
 
-	err = json.Unmarshal(decrypted, &w)
+	err = json.Unmarshal(decrypted, &wallets)
 	if err != nil {
 		return err
 	}
@@ -82,10 +79,10 @@ func (w *Wallets) loadFile() error {
 }
 
 // Saving the wallets to a file.
-func (w *Wallets) SaveFile() {
+func (wallets *Wallets) SaveFile() {
 	filepath := path + filename
 
-	m, err := json.Marshal(w)
+	m, err := json.Marshal(wallets)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -105,43 +102,4 @@ func (w *Wallets) SaveFile() {
 	if err != nil {
 		log.Panic(err)
 	}
-}
-
-func encryptWalletData(key []byte, plaintext []byte) ([]byte, error) {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-
-	// Generate a random initialization vector.
-	iv := make([]byte, aes.BlockSize)
-	if _, err := rand.Read(iv); err != nil {
-		return nil, err
-	}
-
-	// Encrypt the plaintext using AES in CTR mode.
-	stream := cipher.NewCTR(block, iv)
-	ciphertext := make([]byte, len(plaintext))
-	stream.XORKeyStream(ciphertext, plaintext)
-
-	// Concatenate the initialization vector and ciphertext into a single byte slice.
-	encrypted := append(iv, ciphertext...)
-	return encrypted, nil
-}
-
-func decryptWalletData(key []byte, encrypted []byte) ([]byte, error) {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-
-	// Split the encrypted byte slice into the initialization vector and ciphertext.
-	iv, ciphertext := encrypted[:aes.BlockSize], encrypted[aes.BlockSize:]
-
-	// Decrypt the ciphertext using AES in CTR mode.
-	stream := cipher.NewCTR(block, iv)
-	plaintext := make([]byte, len(ciphertext))
-	stream.XORKeyStream(plaintext, ciphertext)
-
-	return plaintext, nil
 }

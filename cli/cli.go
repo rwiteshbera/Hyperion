@@ -19,9 +19,10 @@ func (cli *CLI) validateArgs() {
 }
 
 func (cli *CLI) create() {
-	wallets, _ := wallet.InitWallets()
-	address := wallets.AddWallet()
-	wallets.SaveFile()
+	wallets, _ := wallet.InitWallets()      // Init saved wallets from file
+	newWallet := wallet.CreateWallet(0)     // Create new wallet
+	address := wallets.AddWallet(newWallet) // add it wallets file
+	wallets.SaveFile()                      // save it
 	fmt.Printf("%s\n", address)
 }
 
@@ -30,7 +31,7 @@ func (cli *CLI) list() {
 	addresses := wallets.GetAllAddresses()
 	// wallets.SaveFile()
 	for _, address := range addresses {
-		fmt.Printf("%s\n", address)
+		fmt.Printf("%s : %f\n", address, wallets.GetWallet(address).Balance)
 	}
 }
 
