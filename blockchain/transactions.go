@@ -9,10 +9,13 @@ import (
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"log"
 	"math/big"
 
 	"github.com/rwiteshbera/Blockchain-Go/wallet"
+)
+
+const (
+	TransactionsToStoreInBlock = 2 // How many transactions you want to store in a single block
 )
 
 type Transaction struct {
@@ -30,7 +33,7 @@ type Signature struct {
 
 const (
 	MINING_SNEDER = "THE BLOCKCHAIN"
-	MINING_REWARD = 1.0
+	MINING_REWARD = 0.05 // MINING_REWARD = 0.05 -> 5%
 	MEMPOOL_SIZE  = 2
 )
 
@@ -38,26 +41,36 @@ type Mempool struct {
 	UnconfirmedTransactions []*Transaction
 }
 
+type Miner struct {
+	Rewards map[*wallet.Wallet]float32 // Storing the rewards here to send miner once the block is generated
+}
+
+var mempool = Mempool{}
+var minerRewards = Miner{Rewards: make(map[*wallet.Wallet]float32, 0)}
+
 // This function creates a new transaction object with the given parameters
 func NewTransaction(privateKey *ecdsa.PrivateKey, publicKey *ecdsa.PublicKey, sender string, recipient string, Value float32) *Transaction {
 	return &Transaction{SenderPrivateKey: privateKey, SenderPublicKey: publicKey, SenderWalletAddress: sender, RecipientWalletAddress: recipient, Value: Value}
 }
 
 // Transfer Balance
-func (transaction *Transaction) Transfer(sender *wallet.Wallet, recipient *wallet.Wallet) bool {
-	if sender.Balance == 0 {
-		fmt.Println("No coin")
-		return false
-	} else if sender.Balance >= transaction.Value {
-		recipient.Balance += transaction.Value
+func (transaction *Transaction) Transfer(sender *wallet.Wallet, recipient *wallet.Wallet) (bool, float32) {
+	if sender.Balance >= transaction.Value {
+		// Calculating Gass Fees that will be sent to miner as reward
+		gasFees := float32(transaction.Value) * float32(MINING_REWARD)
+
+		// Transfering value to recipent
+		recipient.Balance += (transaction.Value - gasFees)
+
+		// Deducting value from sender
 		sender.Balance -= transaction.Value
-		fmt.Println("Transferred")
-		return true
-	} else if sender.Balance < transaction.Value {
-		fmt.Println("Not enough balance")
-		return false
+
+		fmt.Println("Transaction Successful")
+		return true, gasFees
 	}
-	return false
+
+	fmt.Printf("Not enough balance : ")
+	return false, 0
 }
 
 // Generating a signature for the transaction.
@@ -78,17 +91,33 @@ func ValidateSignature(signerPublicKey *ecdsa.PublicKey, transaction *Transactio
 }
 
 // Mining
-func (transaction *Transaction) Mining(signerPublicKey *ecdsa.PublicKey, signature *Signature, sender *wallet.Wallet, recipient *wallet.Wallet) {
+func (chain *Blockchain) Mining(transaction *Transaction, signerPublicKey *ecdsa.PublicKey, signature *Signature, sender *wallet.Wallet, recipient *wallet.Wallet, miner *wallet.Wallet) {
 	valid := ValidateSignature(signerPublicKey, transaction, signature)
 
 	// If the transaction is valid, add it to mempool
 	if valid {
-		transaction.Transfer(sender, recipient)
-		mempool := Mempool{}
-		mempool.UnconfirmedTransactions = append(mempool.UnconfirmedTransactions, transaction)
+		isTransferred, gasFees := transaction.Transfer(sender, recipient)
+		minerRewards.Rewards[miner] += gasFees // Storing the reward value that will be sent once the block is generated
 
+		if isTransferred {
+
+			mempool.UnconfirmedTransactions = enqueue(mempool.UnconfirmedTransactions, transaction)
+
+			if len(mempool.UnconfirmedTransactions) == TransactionsToStoreInBlock {
+				// Adding transactions to block
+				chain.AddBlock(mempool.UnconfirmedTransactions, miner.WalletAddress)
+				miner.Balance += minerRewards.Rewards[miner] // Transferring rewards to miner that was temporarily stored in minerRewards instance
+				minerRewards.Rewards[miner] = 0              // As the balance is transfered, therefore make it 0 (Preventing double spending)
+
+				// Removing the first two transactions from the mempool as it is already added to block
+				mempool.UnconfirmedTransactions = mempool.UnconfirmedTransactions[TransactionsToStoreInBlock:]
+				return
+			}
+		} else {
+			fmt.Println("Transaction Failed")
+		}
 	} else {
-		log.Panic("Invalid Transaction")
+		fmt.Println("Transaction Failed")
 	}
 }
 

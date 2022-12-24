@@ -1,6 +1,7 @@
 package blockchain
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -11,14 +12,14 @@ type Blockchain struct {
 type Block struct {
 	BlockNumber         int
 	Nonce               int
-	TransactionsInBlock []Transaction
+	TransactionsInBlock []*Transaction
 	Hash                []byte
 	PreviousHash        []byte
 	TimeStamp           int64
 }
 
 // Create New Block
-func createBlock(NewBlockNumber int, transactionsData []Transaction, previousHash []byte) *Block {
+func createBlock(NewBlockNumber int, transactionsData []*Transaction, previousHash []byte) *Block {
 	block := &Block{
 		BlockNumber:         NewBlockNumber,
 		Nonce:               0,
@@ -37,7 +38,7 @@ func createBlock(NewBlockNumber int, transactionsData []Transaction, previousHas
 }
 
 // Add New Block to the chain
-func (blockchain *Blockchain) AddBlock(transactionsData []Transaction, minerAddress string) {
+func (blockchain *Blockchain) AddBlock(transactionsData []*Transaction, minerAddress string) {
 	previousBlock := blockchain.Blocks[len(blockchain.Blocks)-1]
 	NewBlockNumber := len(blockchain.Blocks) + 1
 	NewBlock := createBlock(NewBlockNumber, transactionsData, previousBlock.Hash)
@@ -47,7 +48,7 @@ func (blockchain *Blockchain) AddBlock(transactionsData []Transaction, minerAddr
 // Build The First Block // Genesis Block
 // https://en.bitcoin.it/wiki/Genesis_block
 func Genesis() *Block {
-	return createBlock(1, []Transaction{}, []byte{})
+	return createBlock(1, []*Transaction{}, []byte{})
 }
 
 /*
@@ -58,4 +59,11 @@ Genesis function creates and returns the first block in the blockchain, often re
 
 func InitBlockchain() *Blockchain {
 	return &Blockchain{[]*Block{Genesis()}}
+}
+
+func (blockchain *Blockchain) ShowBlockchain() {
+	for _, e := range blockchain.Blocks {
+		fmt.Println(e)
+		fmt.Println()
+	}
 }
