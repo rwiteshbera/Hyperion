@@ -1,15 +1,20 @@
 package wallet
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/rand"
 	"encoding/json"
 	"log"
 	"os"
 )
 
-const filename = "wallets.json" // filename + extension
+const filename = "wallets.bin" // filename + extension
 
 // Add '/' after adding the path
 const path = "./wallet/temp/"
+
+var key = []byte("my-encryption-secret-key") // will be added to .env later on with stronger key
 
 type Wallets struct {
 	Wallets map[string]*Wallet
@@ -63,7 +68,12 @@ func (w *Wallets) loadFile() error {
 		return err
 	}
 
-	err = json.Unmarshal(contents, &w)
+	decrypted, err1 := decryptWalletData(key, contents)
+	if err1 != nil {
+		log.Panic(err1)
+	}
+
+	err = json.Unmarshal(decrypted, &w)
 	if err != nil {
 		return err
 	}
@@ -85,8 +95,53 @@ func (w *Wallets) SaveFile() {
 		log.Panic(err)
 	}
 
-	err = os.WriteFile(filepath, m, 0644)
+	encrypted, err := encryptWalletData(key, m)
+
+	if err != nil {
+		log.Panic("ERROR : ", err.Error())
+	}
+
+	err = os.WriteFile(filepath, encrypted, 0644)
 	if err != nil {
 		log.Panic(err)
 	}
+}
+
+func encryptWalletData(key []byte, plaintext []byte) ([]byte, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	// Generate a random initialization vector.
+	iv := make([]byte, aes.BlockSize)
+	if _, err := rand.Read(iv); err != nil {
+		return nil, err
+	}
+
+	// Encrypt the plaintext using AES in CTR mode.
+	stream := cipher.NewCTR(block, iv)
+	ciphertext := make([]byte, len(plaintext))
+	stream.XORKeyStream(ciphertext, plaintext)
+
+	// Concatenate the initialization vector and ciphertext into a single byte slice.
+	encrypted := append(iv, ciphertext...)
+	return encrypted, nil
+}
+
+func decryptWalletData(key []byte, encrypted []byte) ([]byte, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	// Split the encrypted byte slice into the initialization vector and ciphertext.
+	iv, ciphertext := encrypted[:aes.BlockSize], encrypted[aes.BlockSize:]
+
+	// Decrypt the ciphertext using AES in CTR mode.
+	stream := cipher.NewCTR(block, iv)
+	plaintext := make([]byte, len(ciphertext))
+	stream.XORKeyStream(plaintext, ciphertext)
+
+	return plaintext, nil
 }
