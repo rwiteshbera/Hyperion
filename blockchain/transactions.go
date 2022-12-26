@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/rwiteshbera/Blockchain-Go/wallet"
+	"github.com/rwiteshbera/Hyperion/wallet"
 )
 
 const (

@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/rwiteshbera/Blockchain-Go/cli"
+	"github.com/rwiteshbera/Hyperion/cli"
 )
 
 func main() {

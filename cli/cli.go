@@ -7,7 +7,7 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/rwiteshbera/Blockchain-Go/wallet"
+	"github.com/rwiteshbera/Hyperion/wallet"
 )
 
 type CLI struct{}
