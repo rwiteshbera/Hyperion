@@ -1,6 +1,6 @@
 package main
 
-func main() {
+func test() {
 	//chain := blockchain.InitBlockchain()
 	//
 	//wallet1 := wallet.CreateWallet(30) // sender
