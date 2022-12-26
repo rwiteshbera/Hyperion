@@ -6,7 +6,9 @@ import (
 )
 
 type Blockchain struct {
-	Blocks []*Block
+	Mempool          []*Transaction // List of confirmed transactions to be added on next block
+	TransactionQueue []*Transaction // List of transactions to be verified
+	Blocks           []*Block
 }
 
 type Block struct {
@@ -58,7 +60,7 @@ Genesis function creates and returns the first block in the blockchain, often re
 */
 
 func InitBlockchain() *Blockchain {
-	return &Blockchain{[]*Block{Genesis()}}
+	return &Blockchain{Blocks: []*Block{Genesis()}}
 }
 
 func (blockchain *Blockchain) ShowBlockchain() {
