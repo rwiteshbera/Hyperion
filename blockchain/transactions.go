@@ -1,12 +1,9 @@
 package blockchain
 
 import (
-	"bytes"
 	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/sha256"
-	"crypto/x509"
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -16,6 +13,7 @@ import (
 )
 
 const (
+	MiningRewards              = 3 // It will be given to miner's wallet after successful block creation
 	TransactionsToStoreInBlock = 2 // How many transactions you want to store in a single block
 )
 
@@ -33,39 +31,33 @@ type Signature struct {
 	S *big.Int
 }
 
-const (
-	MINING_SNEDER = "THE BLOCKCHAIN"
-	MINING_REWARD = 0.05 // MINING_REWARD = 0.05 -> 5%
-	MEMPOOL_SIZE  = 2
-)
-
 type Miner struct {
+	Wallet  *wallet.Wallet
 	Rewards map[*wallet.Wallet]float32 // Storing the rewards here to send miner once the block is generated
 }
 
 var minerRewards = Miner{Rewards: make(map[*wallet.Wallet]float32, 0)}
+var minerWallet = Miner{Wallet: wallet.CreateWallet(0)}
 
 // This function creates a new transaction object with the given parameters
 func (chain *Blockchain) NewTransaction(privateKey *ecdsa.PrivateKey, publicKey *ecdsa.PublicKey, sender string, recipient string, Value float32) *Transaction {
 	t := &Transaction{SenderPrivateKey: privateKey, SenderPublicKey: publicKey, SenderWalletAddress: sender, RecipientWalletAddress: recipient, Value: Value}
 	t.Signature = GenerateSignature(t)
-	chain.TransactionQueue = append(chain.TransactionQueue, t)
+	chain.TransactionsQueue = append(chain.TransactionsQueue, t)
 	return t
 }
 
 // Transfer Balance
 func (transaction *Transaction) Transfer(sender *wallet.Wallet, recipient *wallet.Wallet) (bool, float32) {
 	if sender.Balance >= transaction.Value {
-		// Calculating Gass Fees that will be sent to miner as reward
-		gasFees := float32(transaction.Value) * float32(MINING_REWARD)
+		// Calculating Gas Fees that will be sent to miner as reward
+		gasFees := transaction.Value * 0.05
 
-		// Transfering value to recipent
-		recipient.Balance += (transaction.Value - gasFees)
+		// Transferring value to recipient
+		recipient.Balance += transaction.Value - gasFees
 
 		// Deducting value from sender
 		sender.Balance -= transaction.Value
-
-		fmt.Println("Transaction Successful")
 		return true, gasFees
 	}
 
@@ -76,7 +68,7 @@ func (transaction *Transaction) Transfer(sender *wallet.Wallet, recipient *walle
 // Generating a signature for the transaction.
 func GenerateSignature(transaction *Transaction) *Signature {
 	m, _ := json.Marshal(transaction)
-	h := sha256.Sum256([]byte(m))
+	h := sha256.Sum256(m)
 	r, s, _ := ecdsa.Sign(rand.Reader, transaction.SenderPrivateKey, h[:])
 
 	return &Signature{R: r, S: s}
@@ -86,20 +78,20 @@ func GenerateSignature(transaction *Transaction) *Signature {
 // signature is valid for the message and public key
 func ValidateSignature(signerPublicKey *ecdsa.PublicKey, transaction *Transaction, signature *Signature) bool {
 	m, _ := json.Marshal(transaction)
-	h := sha256.Sum256([]byte(m))
+	h := sha256.Sum256(m)
 	return ecdsa.Verify(signerPublicKey, h[:], signature.R, signature.S)
 }
 
 // Mining
-func (chain *Blockchain) Mining(sender *wallet.Wallet, recipient *wallet.Wallet, miner *wallet.Wallet) {
+func (chain *Blockchain) Mining(sender *wallet.Wallet, recipient *wallet.Wallet) {
 	// Check if the transactions queue is empty or not?
-	if len(chain.TransactionQueue) == 0 {
+	if len(chain.TransactionsQueue) == 0 {
 		return
 	}
 	// Take first transaction for validation and also remove it from queue
 	var tr1 *Transaction
 	var err error
-	tr1, chain.TransactionQueue, err = dequeue(chain.TransactionQueue)
+	tr1, chain.TransactionsQueue, err = dequeue(chain.TransactionsQueue)
 	if err != nil {
 		log.Panic(err)
 	}
@@ -113,21 +105,22 @@ func (chain *Blockchain) Mining(sender *wallet.Wallet, recipient *wallet.Wallet,
 	}
 	valid := ValidateSignature(transactionWithoutSignature.SenderPublicKey, transactionWithoutSignature, tr1.Signature)
 
-	// If the transaction is valid, add it to mempool
+	// If the transaction is valid, add it to mem-pool
 	if valid {
+
 		isTransferred, gasFees := tr1.Transfer(sender, recipient)
-		minerRewards.Rewards[miner] += gasFees // Storing the reward value that will be sent once the block is generated
+		minerRewards.Rewards[minerWallet.Wallet] += gasFees // Storing the reward value that will be sent once the block is generated
 
 		if isTransferred {
 			chain.Mempool = enqueue(chain.Mempool, tr1)
-
+			fmt.Printf("Transaction Successful : [Balance Transferred : %f] [Gas Fees : %f]\n", tr1.Value, gasFees)
 			if len(chain.Mempool) == TransactionsToStoreInBlock {
 				// Adding transactions to block
-				chain.AddBlock(chain.Mempool, miner.WalletAddress)
-				miner.Balance += minerRewards.Rewards[miner] // Transferring rewards to miner that was temporarily stored in minerRewards instance
-				minerRewards.Rewards[miner] = 0              // As the balance is transfered, therefore make it 0 (Preventing double spending)
+				chain.AddBlock(chain.Mempool, minerWallet.Wallet.GetWalletAddress())
+				minerWallet.Wallet.Balance += minerRewards.Rewards[minerWallet.Wallet] + MiningRewards // Transferring rewards to miner that was temporarily stored in minerRewards instance + Extra MiningReward
+				minerRewards.Rewards[minerWallet.Wallet] = 0                                           // As the balance is transferred, therefore make it 0 (Preventing double spending)
 
-				// Removing the first two transactions from the mempool as it is already added to block
+				// Removing the first two transactions from the mem-pool as it is already added to block
 				chain.Mempool = chain.Mempool[TransactionsToStoreInBlock:]
 				return
 			}
@@ -139,55 +132,7 @@ func (chain *Blockchain) Mining(sender *wallet.Wallet, recipient *wallet.Wallet,
 	}
 }
 
-// Converting the transaction object to a JSON object.
-func (transaction *Transaction) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
-		Sender    string  `json:"sender"`
-		Recipient string  `json:"recipient"`
-		Value     float32 `json:"Value"`
-	}{
-		Sender:    transaction.SenderWalletAddress,
-		Recipient: transaction.RecipientWalletAddress,
-		Value:     transaction.Value,
-	})
-}
-
 // Converting the signature to a string.
 func (signature *Signature) Signature() string {
 	return fmt.Sprintf("%x%x", signature.R.Bytes(), signature.S.Bytes())
-}
-
-// The Serialize method is a way to convert the data stored in a Transaction object into a slice of bytes that can be stored or transmitted. The serialized data contains all of the information needed to recreate the original Transaction object, including the values of its fields.
-func (t *Transaction) Serialize() []byte {
-
-	var buffer bytes.Buffer
-
-	privKeyBytes, _ := x509.MarshalECPrivateKey(t.SenderPrivateKey)
-	err := binary.Write(&buffer, binary.BigEndian, privKeyBytes)
-	if err != nil {
-		return nil
-	}
-
-	pubKeyBytes, _ := x509.MarshalPKIXPublicKey(t.SenderPublicKey)
-	err = binary.Write(&buffer, binary.BigEndian, pubKeyBytes)
-	if err != nil {
-		return nil
-	}
-
-	err = binary.Write(&buffer, binary.BigEndian, []byte(t.SenderWalletAddress))
-	if err != nil {
-		return nil
-	}
-
-	err = binary.Write(&buffer, binary.BigEndian, []byte(t.RecipientWalletAddress))
-	if err != nil {
-		return nil
-	}
-
-	err = binary.Write(&buffer, binary.BigEndian, t.Value)
-	if err != nil {
-		return nil
-	}
-
-	return buffer.Bytes()
 }

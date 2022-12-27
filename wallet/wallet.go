@@ -27,9 +27,9 @@ func CreateWallet(b float32) *Wallet {
 	fullHash := append(versionedHash, checkSum...)
 
 	// Encode byte string to base58
-	wallet_addr := base58Encode(fullHash)
+	walletAddress := base58Encode(fullHash)
 
-	w := Wallet{PrivateKey: &private, PublicKey: &public, WalletAddress: string(wallet_addr), Balance: b}
+	w := Wallet{PrivateKey: &private, PublicKey: &public, WalletAddress: string(walletAddress), Balance: b}
 
 	return &w
 }
@@ -44,19 +44,13 @@ func (w *Wallet) GetKeyValuePair() (*ecdsa.PrivateKey, *ecdsa.PublicKey) {
 }
 
 /*
-	Get Private-Key, Public-Key in string format
-
-Return: Private-Key (string), Public Key (string)
-*/
-func (w *Wallet) GetKeyValuePairInString() (string, string) {
-	return fmt.Sprintf("%x", w.PrivateKey.D.Bytes()), fmt.Sprintf("%x%x", w.PublicKey.X.Bytes(), w.PublicKey.Y.Bytes())
-}
-
-/*
 	Get Wallet Address in string format
 
 Return: Wallet-Address (string)
 */
+func (w *Wallet) GetWalletAddress() string {
+	return fmt.Sprintf("%x%x", w.PublicKey.X.Bytes(), w.PublicKey.Y.Bytes())
+}
 
 // A function that returns the balance of the wallet.
 func (w *Wallet) GetBalance() float32 {

@@ -6,9 +6,9 @@ import (
 )
 
 type Blockchain struct {
-	Mempool          []*Transaction // List of confirmed transactions to be added on next block
-	TransactionQueue []*Transaction // List of transactions to be verified
-	Blocks           []*Block
+	Mempool           []*Transaction // List of confirmed transactions to be added on next block
+	TransactionsQueue []*Transaction // List of transactions to be verified
+	Blocks            []*Block
 }
 
 type Block struct {
@@ -40,11 +40,11 @@ func createBlock(NewBlockNumber int, transactionsData []*Transaction, previousHa
 }
 
 // Add New Block to the chain
-func (blockchain *Blockchain) AddBlock(transactionsData []*Transaction, minerAddress string) {
-	previousBlock := blockchain.Blocks[len(blockchain.Blocks)-1]
-	NewBlockNumber := len(blockchain.Blocks) + 1
+func (chain *Blockchain) AddBlock(transactionsData []*Transaction, minerAddress string) {
+	previousBlock := chain.Blocks[len(chain.Blocks)-1]
+	NewBlockNumber := len(chain.Blocks) + 1
 	NewBlock := createBlock(NewBlockNumber, transactionsData, previousBlock.Hash)
-	blockchain.Blocks = append(blockchain.Blocks, NewBlock)
+	chain.Blocks = append(chain.Blocks, NewBlock)
 }
 
 // Build The First Block // Genesis Block
@@ -63,8 +63,9 @@ func InitBlockchain() *Blockchain {
 	return &Blockchain{Blocks: []*Block{Genesis()}}
 }
 
-func (blockchain *Blockchain) ShowBlockchain() {
-	for _, e := range blockchain.Blocks {
+func (chain *Blockchain) ShowBlockchain() {
+	fmt.Printf("Genesis Block : c")
+	for _, e := range chain.Blocks {
 		fmt.Println(e)
 		fmt.Println()
 	}
