@@ -30,20 +30,34 @@ type Signature struct {
 }
 
 // This function creates a new transaction object with the given parameters
-func (chain *Blockchain) NewTransaction(privateKey *ecdsa.PrivateKey, publicKey *ecdsa.PublicKey, sender string, recipient string, Value float32) *Transaction {
-	t := &Transaction{SenderPrivateKey: privateKey, SenderPublicKey: publicKey, SenderWalletAddress: sender, RecipientWalletAddress: recipient, Value: Value}
-	t.Signature = GenerateSignature(t)
+func (chain *Blockchain) NewTransaction(privateKey string, publicKey string, sender string, recipient string, Value float32) {
+	privateKeyInECDSA, publicKeyInECDSA, err := DecodeStringToECDSA(privateKey, publicKey)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+	t := &Transaction{SenderPrivateKey: privateKeyInECDSA, SenderPublicKey: publicKeyInECDSA, SenderWalletAddress: sender, RecipientWalletAddress: recipient, Value: Value}
+
+	t.Signature, err = GenerateSignature(t)
+	fmt.Println(len(chain.TransactionsQueue))
+	if err != nil {
+		log.Panic(err.Error())
+	}
 	chain.TransactionsQueue = append(chain.TransactionsQueue, t)
-	return t
+	fmt.Println(chain.GetMempool())
 }
 
 // Generating a signature for the transaction.
-func GenerateSignature(transaction *Transaction) *Signature {
-	m, _ := json.Marshal(transaction)
+func GenerateSignature(transaction *Transaction) (*Signature, error) {
+	m, err := json.Marshal(transaction)
+	if err != nil {
+		return nil, err
+	}
 	h := sha256.Sum256(m)
-	r, s, _ := ecdsa.Sign(rand.Reader, transaction.SenderPrivateKey, h[:])
-
-	return &Signature{R: r, S: s}
+	r, s, err := ecdsa.Sign(rand.Reader, transaction.SenderPrivateKey, h[:])
+	if err != nil {
+		return nil, err
+	}
+	return &Signature{R: r, S: s}, nil
 }
 
 // ValidateSignature takes a public key, a transactionData, and a signature, and returns true if the

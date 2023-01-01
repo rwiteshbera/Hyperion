@@ -1,7 +1,8 @@
 package wallet
 
 import (
-	"crypto/ecdsa"
+	"crypto/x509"
+	"encoding/base64"
 	"fmt"
 	"github.com/rwiteshbera/Hyperion/blockchain"
 )
@@ -36,12 +37,22 @@ func CreateWallet() *Wallet {
 }
 
 /*
-	Get ECDSA New Private Key (32bytes) - Public-Key (64bytes) Pair
-
-Return : Private-Key (ecdsa.PrivateKey), Public-Key(ecdsa.PublicKey)
+Get Wallet PrivateKey and PublicKey in string format
 */
-func (w *Wallet) GetKeyValuePair() (*ecdsa.PrivateKey, *ecdsa.PublicKey) {
-	return w.PrivateKey, w.PublicKey
+func (w *Wallet) GetKeyValuePair() (string, string, error) {
+	privateKeyBytes, err := x509.MarshalECPrivateKey(w.PrivateKey)
+	if err != nil {
+		return "", "", err
+	}
+	privateKeyString := base64.StdEncoding.EncodeToString(privateKeyBytes)
+
+	publicKeyBytes, err := x509.MarshalPKIXPublicKey(w.PublicKey)
+	if err != nil {
+		return "", "", err
+	}
+	publicKeyString := base64.StdEncoding.EncodeToString(publicKeyBytes)
+
+	return privateKeyString, publicKeyString, nil
 }
 
 /*

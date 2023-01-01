@@ -4,11 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"github.com/rwiteshbera/Hyperion/network"
+	"github.com/rwiteshbera/Hyperion/wallet"
 	"log"
 	"os"
 	"runtime"
-
-	"github.com/rwiteshbera/Hyperion/wallet"
 )
 
 type CLI struct{}
@@ -21,11 +20,16 @@ func (cli *CLI) validateArgs() {
 
 // Create a new wallet
 func (cli *CLI) createWallet() {
-	wallets, _ := wallet.LoadWallets()      // Init saved wallets from file
-	newWallet := wallet.CreateWallet()      // Create new wallet
-	address := wallets.AddWallet(newWallet) // add it to wallets
-	wallets.SaveFile()                      // save it
-	fmt.Printf("%s\n", address)
+	wallets, _ := wallet.LoadWallets() // Init saved wallets from file
+	newWallet := wallet.CreateWallet() // Create new wallet
+	wallets.AddWallet(newWallet)       // add it to wallets
+	wallets.SaveFile()                 // save it
+
+	privatekey, publickey, err := newWallet.GetKeyValuePair()
+	if err != nil {
+		log.Panic(err.Error())
+	}
+	fmt.Printf("Wallet Address : %s\nPrivate Key : %s\nPublic Key : %s\n", newWallet.GetWalletAddress(), privatekey, publickey)
 }
 
 // List all the save wallets with balances
@@ -34,7 +38,7 @@ func (cli *CLI) listWallets() {
 	addresses := wallets.GetAllAddresses()
 	// wallets.SaveFile()
 	for _, address := range addresses {
-		fmt.Printf("%s \n", address)
+		fmt.Printf("%s\n", address)
 	}
 }
 
@@ -79,8 +83,10 @@ func (cli *CLI) RunCLI() {
 	}
 	if ServerStartupPort.Parsed() {
 		port := ServerStartupPort.String("port", "", "The port to listen on")
-		ServerStartupPort.Parse(os.Args[1:])
+		err := ServerStartupPort.Parse(os.Args[1:])
+		if err != nil {
+			return
+		}
 		cli.startBlockchainServer(port)
 	}
-
 }

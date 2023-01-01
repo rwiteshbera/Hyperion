@@ -1,8 +1,6 @@
 package blockchain
 
 import (
-	"fmt"
-	"log"
 	"sync"
 	"time"
 )
@@ -67,16 +65,15 @@ func InitBlockchain() *Blockchain {
 	return &Blockchain{Blocks: []*Block{Genesis()}}
 }
 
-func (chain *Blockchain) ShowBlockchain() {
-	fmt.Printf("Genesis Block : ")
-	for _, e := range chain.Blocks {
-		blockTime := e.TimeStamp
-		t, err := time.Parse(time.RFC3339, blockTime)
-		if err != nil {
-			log.Panic(err)
-		}
+func (chain *Blockchain) GetBlocks() []*Block {
+	chain.mux.Lock()
+	defer chain.mux.Unlock()
 
-		fmt.Printf("%d => %d %s %d : %d:%d:%d\n", e.BlockNumber, t.Day(), t.Month(), t.Year(), t.Hour(), t.Minute(), t.Second())
-		fmt.Println()
-	}
+	return chain.Blocks
+}
+func (chain *Blockchain) GetMempool() []*Transaction {
+	chain.mux.Lock()
+	defer chain.mux.Unlock()
+
+	return chain.Mempool
 }

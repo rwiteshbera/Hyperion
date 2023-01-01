@@ -1,42 +1,52 @@
 package network
 
 import (
+	"fmt"
+	"github.com/gin-gonic/gin"
 	"github.com/rwiteshbera/Hyperion/blockchain"
-	"io"
 	"log"
 	"net/http"
 )
 
-type BlockchainServer struct {
-	port string
-}
-
-func NewBlockchainServer(port string) *BlockchainServer {
-	return &BlockchainServer{port}
-}
-
-func (chain *BlockchainServer) PORT() string {
-	return chain.port
-}
-
-func HelloWorld(w http.ResponseWriter, req *http.Request) {
-	io.WriteString(w, "Hello World")
-}
-
-func (chain *BlockchainServer) Run() {
-	bcs := blockchain.InitBlockchain()
-	bcs.StartMining()
-	http.HandleFunc("/", HelloWorld)
-
-	// Start the server
-	log.Println("Starting Blockchain server on 0.0.0.0:" + chain.PORT())
-	if err := http.ListenAndServe("0.0.0.0:"+chain.PORT(), nil); err != nil {
-		log.Fatal(err)
-	}
-}
+var Bcs *blockchain.Blockchain
 
 func Server(port *string) {
-	p := *port
-	chain := NewBlockchainServer(p)
-	chain.Run()
+	fmt.Println("Initializing Blockchain Server...")
+	Bcs = blockchain.InitBlockchain()
+	Bcs.StartMining()
+
+	gin.SetMode(gin.ReleaseMode)
+	router := gin.New()
+	router.Use(gin.Recovery())
+
+	router.GET("/", func(c *gin.Context) {
+		c.JSON(http.StatusOK, gin.H{"message": "blockchain server is running!"})
+	})
+
+	router.GET("/tx", func(c *gin.Context) {
+		transactions := Bcs.GetMempool()
+		c.JSON(http.StatusOK, gin.H{"transactions": transactions})
+	})
+
+	router.POST("/tx", func(c *gin.Context) {
+		var txData struct {
+			PrivateKey string  `json:"privateKey"`
+			PublicKey  string  `json:"publicKey"`
+			Sender     string  `json:"sender"`
+			Recipient  string  `json:"recipient"`
+			Value      float32 `json:"value"`
+		}
+		if err := c.ShouldBindJSON(&txData); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		Bcs.NewTransaction(txData.PrivateKey, txData.PublicKey, txData.Sender, txData.Recipient, txData.Value)
+		c.JSON(http.StatusOK, gin.H{"message": "Transaction successful"})
+	})
+
+	err := router.Run(":" + *port)
+	if err != nil {
+		log.Panic(err.Error())
+	}
+
 }

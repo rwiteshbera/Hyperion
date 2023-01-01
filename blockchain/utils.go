@@ -2,10 +2,13 @@ package blockchain
 
 import (
 	"bytes"
+	"crypto/ecdsa"
 	"crypto/x509"
+	"encoding/base64"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
+	"fmt"
 )
 
 func enqueue[T comparable](queue []*T, element *T) []*T {
@@ -74,4 +77,32 @@ func (transaction *Transaction) Serialize() []byte {
 	}
 
 	return buffer.Bytes()
+}
+
+func DecodeStringToECDSA(encodedPriv string, encodedPub string) (*ecdsa.PrivateKey, *ecdsa.PublicKey, error) {
+	privateKeyBytes, err1 := base64.StdEncoding.DecodeString(encodedPriv)
+	if err1 != nil {
+		return nil, nil, err1
+	}
+
+	privateKey, err1 := x509.ParseECPrivateKey(privateKeyBytes)
+	if err1 != nil {
+		return nil, nil, err1
+	}
+
+	publicKeyBytes, err2 := base64.StdEncoding.DecodeString(encodedPub)
+	if err2 != nil {
+		return nil, nil, err2
+	}
+	publicKeyInterface, err2 := x509.ParsePKIXPublicKey(publicKeyBytes)
+	if err2 != nil {
+		return nil, nil, err2
+	}
+
+	publicKey, ok := publicKeyInterface.(*ecdsa.PublicKey)
+	if !ok {
+		return nil, nil, fmt.Errorf("error casting public key to ECDSA public key type")
+	}
+
+	return privateKey, publicKey, nil
 }
