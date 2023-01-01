@@ -3,6 +3,7 @@ package wallet
 import (
 	"crypto/ecdsa"
 	"fmt"
+	"github.com/rwiteshbera/Hyperion/blockchain"
 )
 
 /*
@@ -10,7 +11,7 @@ import (
 
 Return: type: Wallet 'struct'
 */
-func CreateWallet(b float32) *Wallet {
+func CreateWallet() *Wallet {
 	// Generate ECDSA New Private Key (32bytes) - Public-Key (64bytes) Pair
 	private, public := generateNewKeyPair()
 
@@ -29,7 +30,7 @@ func CreateWallet(b float32) *Wallet {
 	// Encode byte string to base58
 	walletAddress := base58Encode(fullHash)
 
-	w := Wallet{PrivateKey: &private, PublicKey: &public, WalletAddress: string(walletAddress), Balance: b}
+	w := Wallet{PrivateKey: &private, PublicKey: &public, WalletAddress: string(walletAddress)}
 
 	return &w
 }
@@ -53,6 +54,27 @@ func (w *Wallet) GetWalletAddress() string {
 }
 
 // A function that returns the balance of the wallet.
-func (w *Wallet) GetBalance() float32 {
-	return w.Balance
+func (w *Wallet) GetWalletBalance(chain *blockchain.Blockchain) (float32, error) {
+	balances := make(map[string]float32)
+
+	for _, block := range chain.Blocks {
+		balances = UpdateWalletBalance(block.TransactionsInBlock, balances)
+	}
+
+	balance, ok := balances[w.GetWalletAddress()]
+	if !ok {
+		return 0, fmt.Errorf("wallet not found")
+	}
+
+	return balance, nil
+}
+
+// Update Wallet Balance
+func UpdateWalletBalance(transactionsInBlock []*blockchain.Transaction, balances map[string]float32) map[string]float32 {
+	for _, transaction := range transactionsInBlock {
+		balances[transaction.SenderWalletAddress] -= transaction.Value
+		balances[transaction.RecipientWalletAddress] += transaction.Value
+	}
+
+	return balances
 }

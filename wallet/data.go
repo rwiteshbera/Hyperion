@@ -17,13 +17,6 @@ type Wallets struct {
 	Wallets map[string]*Wallet
 }
 
-func InitWallets() (*Wallets, error) {
-	wallets := Wallets{}
-	wallets.Wallets = make(map[string]*Wallet)
-	err := wallets.loadFile()
-	return &wallets, err
-}
-
 func (wallets *Wallets) AddWallet(wallet *Wallet) string {
 	wallets.Wallets[wallet.WalletAddress] = wallet
 	return wallet.WalletAddress

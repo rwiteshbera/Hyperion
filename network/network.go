@@ -1,6 +1,7 @@
 package network
 
 import (
+	"github.com/rwiteshbera/Hyperion/blockchain"
 	"io"
 	"log"
 	"net/http"
@@ -23,6 +24,8 @@ func HelloWorld(w http.ResponseWriter, req *http.Request) {
 }
 
 func (chain *BlockchainServer) Run() {
+	bcs := blockchain.InitBlockchain()
+	bcs.StartMining()
 	http.HandleFunc("/", HelloWorld)
 
 	// Start the server

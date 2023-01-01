@@ -2,6 +2,8 @@ package blockchain
 
 import (
 	"fmt"
+	"log"
+	"sync"
 	"time"
 )
 
@@ -9,6 +11,7 @@ type Blockchain struct {
 	Mempool           []*Transaction // List of confirmed transactions to be added on next block
 	TransactionsQueue []*Transaction // List of transactions to be verified
 	Blocks            []*Block
+	mux               sync.Mutex
 }
 
 type Block struct {
@@ -17,7 +20,7 @@ type Block struct {
 	TransactionsInBlock []*Transaction
 	Hash                []byte
 	PreviousHash        []byte
-	TimeStamp           int64
+	TimeStamp           string
 }
 
 // Create New Block
@@ -28,23 +31,24 @@ func createBlock(NewBlockNumber int, transactionsData []*Transaction, previousHa
 		TransactionsInBlock: transactionsData,
 		Hash:                []byte{},
 		PreviousHash:        previousHash,
-		TimeStamp:           time.Now().Unix(),
+		TimeStamp:           time.Now().Format(time.RFC3339),
 	}
+
 	proofOfWork := newProof(block)
-
 	nonce, hash := proofOfWork.run()
-
 	block.Nonce = nonce
 	block.Hash = hash[:]
+
 	return block
 }
 
 // Add New Block to the chain
-func (chain *Blockchain) AddBlock(transactionsData []*Transaction, minerAddress string) {
+func (chain *Blockchain) AddBlock(transactionsData []*Transaction) *Block {
 	previousBlock := chain.Blocks[len(chain.Blocks)-1]
 	NewBlockNumber := len(chain.Blocks) + 1
 	NewBlock := createBlock(NewBlockNumber, transactionsData, previousBlock.Hash)
 	chain.Blocks = append(chain.Blocks, NewBlock)
+	return NewBlock
 }
 
 // Build The First Block // Genesis Block
@@ -64,9 +68,15 @@ func InitBlockchain() *Blockchain {
 }
 
 func (chain *Blockchain) ShowBlockchain() {
-	fmt.Printf("Genesis Block : c")
+	fmt.Printf("Genesis Block : ")
 	for _, e := range chain.Blocks {
-		fmt.Println(e)
+		blockTime := e.TimeStamp
+		t, err := time.Parse(time.RFC3339, blockTime)
+		if err != nil {
+			log.Panic(err)
+		}
+
+		fmt.Printf("%d => %d %s %d : %d:%d:%d\n", e.BlockNumber, t.Day(), t.Month(), t.Year(), t.Hour(), t.Minute(), t.Second())
 		fmt.Println()
 	}
 }

@@ -17,7 +17,7 @@ import (
 
 // Check if the hash is less than or equal to target hash / check valid hash
 
-const MiningDifficulty = 8
+const MiningDifficulty = 10
 
 type ProofOfWork struct {
 	Block      *Block
@@ -39,7 +39,7 @@ func (pow *ProofOfWork) initData(nonce int) []byte {
 		transactionBytes[i] = transaction.Serialize()
 	}
 
-	// Concatenate all of the transaction bytes into a single slice
+	// Concatenate all the transaction bytes into a single slice
 	allTransactionBytes := bytes.Join(transactionBytes, []byte{})
 
 	data := bytes.Join(

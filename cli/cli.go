@@ -21,8 +21,8 @@ func (cli *CLI) validateArgs() {
 
 // Create a new wallet
 func (cli *CLI) createWallet() {
-	wallets, _ := wallet.InitWallets()      // Init saved wallets from file
-	newWallet := wallet.CreateWallet(0)     // Create new wallet
+	wallets, _ := wallet.LoadWallets()      // Init saved wallets from file
+	newWallet := wallet.CreateWallet()      // Create new wallet
 	address := wallets.AddWallet(newWallet) // add it to wallets
 	wallets.SaveFile()                      // save it
 	fmt.Printf("%s\n", address)
@@ -30,11 +30,11 @@ func (cli *CLI) createWallet() {
 
 // List all the save wallets with balances
 func (cli *CLI) listWallets() {
-	wallets, _ := wallet.InitWallets()
+	wallets, _ := wallet.LoadWallets()
 	addresses := wallets.GetAllAddresses()
 	// wallets.SaveFile()
 	for _, address := range addresses {
-		fmt.Printf("%s : %f\n", address, wallets.GetWallet(address).Balance)
+		fmt.Printf("%s \n", address)
 	}
 }
 
