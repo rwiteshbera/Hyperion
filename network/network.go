@@ -8,27 +8,33 @@ import (
 	"net/http"
 )
 
-var Bcs *blockchain.Blockchain
-
 func Server(port *string) {
 	fmt.Println("Initializing Blockchain Server...")
-	Bcs = blockchain.InitBlockchain()
-	Bcs.StartMining()
+	blockchain.BlockchainInstance = blockchain.InitBlockchain()
+	blockchain.BlockchainInstance.StartMining()
 
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
 	router.Use(gin.Recovery())
 
 	router.GET("/", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{"message": "blockchain server is running!"})
+		c.JSON(http.StatusOK, gin.H{"Blockchain": blockchain.BlockchainInstance.GetBlocks()})
 	})
 
-	router.GET("/tx", func(c *gin.Context) {
-		transactions := Bcs.GetMempool()
-		c.JSON(http.StatusOK, gin.H{"transactions": transactions})
+	router.GET("/explore/:transaction", func(c *gin.Context) {
+		transactionHash := c.Param("transaction")
+		all_transactions := blockchain.BlockchainInstance.GetTransactions()
+
+		for _, transaction := range all_transactions {
+			if transactionHash == transaction.HashId {
+				c.JSON(http.StatusOK, gin.H{"Status": "Confirmed", "sender": transaction.SenderWalletAddress, "recipient": transaction.RecipientWalletAddress, "Amount": transaction.Value, "Broadcasted On": transaction.BroadcastedOn})
+				return
+			}
+		}
+		c.JSON(http.StatusOK, gin.H{"Status": "Pending", "Transaction Id": transactionHash})
 	})
 
-	router.POST("/tx", func(c *gin.Context) {
+	router.POST("/new", func(c *gin.Context) {
 		var txData struct {
 			PrivateKey string  `json:"privateKey"`
 			PublicKey  string  `json:"publicKey"`
@@ -40,8 +46,9 @@ func Server(port *string) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		Bcs.NewTransaction(txData.PrivateKey, txData.PublicKey, txData.Sender, txData.Recipient, txData.Value)
-		c.JSON(http.StatusOK, gin.H{"message": "Transaction successful"})
+
+		transactionId := blockchain.BlockchainInstance.NewTransaction(txData.PrivateKey, txData.PublicKey, txData.Sender, txData.Recipient, txData.Value)
+		c.JSON(http.StatusOK, gin.H{"Transaction Id": transactionId})
 	})
 
 	err := router.Run(":" + *port)

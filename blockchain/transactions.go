@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -16,12 +17,14 @@ const (
 )
 
 type Transaction struct {
+	HashId                 string
 	SenderPrivateKey       *ecdsa.PrivateKey
 	SenderPublicKey        *ecdsa.PublicKey
 	SenderWalletAddress    string
 	RecipientWalletAddress string
 	Value                  float32
 	Signature              *Signature
+	BroadcastedOn          string
 }
 
 type Signature struct {
@@ -30,20 +33,23 @@ type Signature struct {
 }
 
 // This function creates a new transaction object with the given parameters
-func (chain *Blockchain) NewTransaction(privateKey string, publicKey string, sender string, recipient string, Value float32) {
+func (chain *Blockchain) NewTransaction(privateKey string, publicKey string, sender string, recipient string, Value float32) string {
 	privateKeyInECDSA, publicKeyInECDSA, err := DecodeStringToECDSA(privateKey, publicKey)
 	if err != nil {
 		log.Panic(err.Error())
 	}
+
 	t := &Transaction{SenderPrivateKey: privateKeyInECDSA, SenderPublicKey: publicKeyInECDSA, SenderWalletAddress: sender, RecipientWalletAddress: recipient, Value: Value}
 
 	t.Signature, err = GenerateSignature(t)
-	fmt.Println(len(chain.TransactionsQueue))
 	if err != nil {
 		log.Panic(err.Error())
 	}
+	broadcastedOn := time.Now().Format(time.RFC3339)
+	t.BroadcastedOn = broadcastedOn
+	t.HashId = generateTransactionHashId(t.Serialize(), broadcastedOn)
 	chain.TransactionsQueue = append(chain.TransactionsQueue, t)
-	fmt.Println(chain.GetMempool())
+	return t.HashId
 }
 
 // Generating a signature for the transaction.
@@ -75,7 +81,6 @@ func (chain *Blockchain) mine() {
 
 	// Check if the transactions queue is empty or not?
 	if len(chain.TransactionsQueue) == 0 {
-		fmt.Println("No transaction in queue")
 		return
 	}
 
@@ -106,8 +111,6 @@ func (chain *Blockchain) mine() {
 
 			// Removing the first two transactions from the mem-pool as it is already added to block
 			chain.Mempool = chain.Mempool[TransactionsToStoreInBlock:]
-
-			return
 		}
 	} else {
 		fmt.Println("Transaction Failed")
@@ -124,4 +127,12 @@ func (chain *Blockchain) StartMining() {
 // Converting the signature to a string.
 func (signature *Signature) Signature() string {
 	return fmt.Sprintf("%x%x", signature.R.Bytes(), signature.S.Bytes())
+}
+
+// Generate Transaction Hash ID
+func generateTransactionHashId(bytes []byte, broadcastedOn string) string {
+	hash_1_2 := append(bytes[:], broadcastedOn[:]...)
+	hash_id := sha256.Sum256(hash_1_2)
+	tID := hex.EncodeToString(hash_id[:])
+	return tID
 }

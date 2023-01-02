@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 )
 
 func enqueue[T comparable](queue []*T, element *T) []*T {
@@ -80,6 +81,9 @@ func (transaction *Transaction) Serialize() []byte {
 }
 
 func DecodeStringToECDSA(encodedPriv string, encodedPub string) (*ecdsa.PrivateKey, *ecdsa.PublicKey, error) {
+	encodedPriv = strings.TrimSpace(encodedPriv)
+	encodedPub = strings.TrimSpace(encodedPub)
+
 	privateKeyBytes, err1 := base64.StdEncoding.DecodeString(encodedPriv)
 	if err1 != nil {
 		return nil, nil, err1

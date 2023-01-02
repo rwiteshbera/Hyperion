@@ -89,4 +89,5 @@ func (cli *CLI) RunCLI() {
 		}
 		cli.startBlockchainServer(port)
 	}
+
 }

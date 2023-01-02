@@ -21,6 +21,9 @@ type Block struct {
 	TimeStamp           string
 }
 
+// Blockchain instance to be used for storing data
+var BlockchainInstance *Blockchain
+
 // Create New Block
 func createBlock(NewBlockNumber int, transactionsData []*Transaction, previousHash []byte) *Block {
 	block := &Block{
@@ -71,9 +74,15 @@ func (chain *Blockchain) GetBlocks() []*Block {
 
 	return chain.Blocks
 }
-func (chain *Blockchain) GetMempool() []*Transaction {
+
+func (chain *Blockchain) GetTransactions() []*Transaction {
 	chain.mux.Lock()
 	defer chain.mux.Unlock()
 
-	return chain.Mempool
+	var t []*Transaction
+	for _, e := range chain.Blocks {
+		t = append(t, e.TransactionsInBlock...)
+	}
+
+	return t
 }
