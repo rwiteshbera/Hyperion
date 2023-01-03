@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/rwiteshbera/Hyperion/blockchain"
+	"github.com/rwiteshbera/Hyperion/wallet"
 	"log"
 	"net/http"
 )
@@ -17,10 +18,12 @@ func Server(port *string) {
 	router := gin.New()
 	router.Use(gin.Recovery())
 
+	// Visualize the blockchain
 	router.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"Blockchain": blockchain.BlockchainInstance.GetBlocks()})
 	})
 
+	// Check transaction status
 	router.GET("/explore/:transaction", func(c *gin.Context) {
 		transactionHash := c.Param("transaction")
 		all_transactions := blockchain.BlockchainInstance.GetTransactions()
@@ -34,6 +37,25 @@ func Server(port *string) {
 		c.JSON(http.StatusOK, gin.H{"Status": "Pending", "Transaction Id": transactionHash})
 	})
 
+	// Check wallet balance
+	router.GET("/wallet/:address", func(c *gin.Context) {
+		walletAddress := c.Param("address")
+		allBlocks := blockchain.BlockchainInstance.GetBlocks()
+
+		balances := make(map[string]float32)
+		for _, block := range allBlocks {
+			balances = wallet.UpdateWalletBalance(block.TransactionsInBlock, balances)
+		}
+
+		balance, ok := balances[walletAddress]
+		if !ok {
+			c.JSON(http.StatusOK, gin.H{"Wallet Address": walletAddress, "Balance": 0})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"Wallet Address": walletAddress, "Balance": balance})
+	})
+
+	// Create new transaction
 	router.POST("/new", func(c *gin.Context) {
 		var txData struct {
 			PrivateKey string  `json:"privateKey"`

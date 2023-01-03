@@ -4,7 +4,8 @@ Blockchain project aims to implement the core functionality of a blockchain, inc
 ```bash
 go run main.go --create
 ```
-Keep your private key secure and do not share it. It is stored in encrypted form on your local device and can only be accessed with the correct passphrase.
+**Warning:** Never disclose the private key. Anyone with your private key can steal your assets. It is important to ensure that you have securely saved your private key and public key as we do not store it.
+
 
 - List All Blockchain Wallets
 ```bash
@@ -37,5 +38,11 @@ Request Body in JSON Format:
 - Verify Transaction
 ```text
 Endpoint : http://localhost:<PORT>/explore/<TRANSACTION_HASH>
+Request Type : GET
+```
+
+- Check Wallet Balance
+```text
+Endpoint : http://localhost:<PORT>/wallet/<WALLET_ADDRESS>
 Request Type : GET
 ```

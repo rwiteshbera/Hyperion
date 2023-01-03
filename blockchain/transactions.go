@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	TransactionsToStoreInBlock = 2 // How many transactions you want to store in a single block
+	TransactionsToStoreInBlock = 1 // How many transactions you want to store in a single block
 )
 
 type Transaction struct {
