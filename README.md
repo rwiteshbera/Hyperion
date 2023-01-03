@@ -1,4 +1,6 @@
-Blockchain project aims to implement the core functionality of a blockchain, including the ability to add new blocks to the chain, verify the integrity of the chain, and secure the data stored in the blocks using cryptographic hashes.
+![Hyperion Header](https://user-images.githubusercontent.com/73098407/210416970-710f9153-18fe-48fd-9e51-39db3b9801ed.jpg)
+
+#### Blockchain project aims to implement the core functionality of a blockchain, including the ability to add new blocks to the chain, verify the integrity of the chain, and secure the data stored in the blocks using cryptographic hashes.
 
 - Create New Blockchain Wallet
 ```bash
