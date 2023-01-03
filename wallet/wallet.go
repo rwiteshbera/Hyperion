@@ -61,7 +61,7 @@ func (w *Wallet) GetKeyValuePair() (string, string, error) {
 Return: Wallet-Address (string)
 */
 func (w *Wallet) GetWalletAddress() string {
-	return fmt.Sprintf("%x%x", w.PublicKey.X.Bytes(), w.PublicKey.Y.Bytes())
+	return w.WalletAddress
 }
 
 // A function that returns the balance of the wallet.

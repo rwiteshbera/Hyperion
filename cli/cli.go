@@ -30,15 +30,15 @@ func (cli *CLI) createWallet() {
 		log.Panic(err.Error())
 	}
 	fmt.Printf("Wallet Address : %s\nPrivate Key : %s\nPublic Key : %s\n", newWallet.GetWalletAddress(), privatekey, publickey)
+	fmt.Printf("\nWarning: Never disclose the private key. Anyone with your private key can steal your assets.\nIt is important to ensure that you have securely saved your private key and public key as we do not store it.\nThe \"--list\" command will display only the wallet addresses that are stored on your system.")
 }
 
 // List all the save wallets with balances
 func (cli *CLI) listWallets() {
 	wallets, _ := wallet.LoadWallets()
 	addresses := wallets.GetAllAddresses()
-	// wallets.SaveFile()
-	for _, address := range addresses {
-		fmt.Printf("%s\n", address)
+	for i, address := range addresses {
+		fmt.Printf("%d : %s\n", i+1, address)
 	}
 }
 
