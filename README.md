@@ -6,13 +6,18 @@
 ```bash
 go run main.go --create
 ```
-**Warning:** Never disclose the private key. Anyone with your private key can steal your assets. It is important to ensure that you have securely saved your private key and public key as we do not store it.
+**Warning:** Never disclose the private key. Anyone with your private key can steal your assets. 
 
 
 - List All Blockchain Wallets
 ```bash
 go run main.go --list
 ```
+
+- Get Private Key and Public Key for Transaction
+```bash
+go run main.go --get <WALLET_ADDRESS>
+``` 
 
 - Run Blockchain Server
 ```bash
