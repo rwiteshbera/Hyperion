@@ -11,6 +11,7 @@ import (
 
 func Server(port *string) {
 	fmt.Println("Initializing Blockchain Server...")
+	fmt.Println("Warning: The server will not retain any information once it is turned off. Any data on blocks will be lost once the server is stopped.")
 	blockchain.BlockchainInstance = blockchain.InitBlockchain()
 	blockchain.BlockchainInstance.StartMining()
 

@@ -3,19 +3,9 @@ package blockchain
 import (
 	"bytes"
 	"crypto/sha256"
-	"encoding/binary"
-	"log"
 	"math"
 	"math/big"
 )
-
-// Take the block data
-
-// Create a counter / nonce which starts at 0
-
-// Create a hash of the data + nonce
-
-// Check if the hash is less than or equal to target hash / check valid hash
 
 const MiningDifficulty = 10
 
@@ -74,19 +64,4 @@ func (pow *ProofOfWork) run() (int, []byte) {
 		}
 	}
 	return nonce, hash
-}
-
-/*
-This function converts an int64 (a 64-bit signed integer) to a slice of bytes in big-endian order.
-
-bytes := ToHex(1234567890)
-fmt.Println(bytes) // Output: [72, 144, 173, 205, 1, 0, 0, 0]
-*/
-func toHex(num int64) []byte {
-	buffer := new(bytes.Buffer)
-	if err := binary.Write(buffer, binary.BigEndian, num); err != nil {
-		log.Panic(err)
-	}
-
-	return buffer.Bytes()
 }

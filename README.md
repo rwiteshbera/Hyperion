@@ -1,6 +1,6 @@
 ![Hyperion Header](https://user-images.githubusercontent.com/73098407/210416970-710f9153-18fe-48fd-9e51-39db3b9801ed.jpg)
 
-#### Blockchain project aims to implement the core functionality of a blockchain, including the ability to add new blocks to the chain, verify the integrity of the chain, and secure the data stored in the blocks using cryptographic hashes.
+#### A blockchain project aims to implement the basic features of a blockchain system, such as adding new blocks through a proof of work process, verifying transactions and ensuring the security of the chain through cryptographic hashes, and safeguarding the information stored in the blocks. Additionally, it also aims to include a wallet feature that utilizes Elliptic Curve Digital Signature Algorithm (ECDSA) to generate private and public keys.
 
 - Create New Blockchain Wallet
 ```bash

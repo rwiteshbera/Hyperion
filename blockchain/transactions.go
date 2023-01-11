@@ -52,7 +52,7 @@ func (chain *Blockchain) NewTransaction(privateKey string, publicKey string, sen
 	return t.HashId
 }
 
-// Generating a signature for the transaction.
+// GenerateSignature : Generating a signature for the transaction.
 func GenerateSignature(transaction *Transaction) (*Signature, error) {
 	m, err := json.Marshal(transaction)
 	if err != nil {
@@ -99,6 +99,8 @@ func (chain *Blockchain) mine() {
 		RecipientWalletAddress: tr1.RecipientWalletAddress,
 		Value:                  tr1.Value,
 	}
+
+	// Check whether the signature is valid or not
 	valid := ValidateSignature(transactionWithoutSignature.SenderPublicKey, transactionWithoutSignature, tr1.Signature)
 
 	// If the transaction is valid, add it to Mempool
@@ -118,13 +120,13 @@ func (chain *Blockchain) mine() {
 
 }
 
-// Start the mining process
+// StartMining : Start the mining process
 func (chain *Blockchain) StartMining() {
 	chain.mine()
 	_ = time.AfterFunc(time.Second*5, chain.StartMining)
 }
 
-// Converting the signature to a string.
+// Signature : Converting the signature to a string.
 func (signature *Signature) Signature() string {
 	return fmt.Sprintf("%x%x", signature.R.Bytes(), signature.S.Bytes())
 }

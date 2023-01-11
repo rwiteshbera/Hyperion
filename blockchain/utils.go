@@ -9,14 +9,17 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 )
 
+// Add new element in queue and return the queue
 func enqueue[T comparable](queue []*T, element *T) []*T {
 	queue = append(queue, element)
 	return queue
 }
 
+// Remove the first element from the queue and return it.
 func dequeue[T comparable](queue []*T) (*T, []*T, error) {
 	if len(queue) == 0 {
 		return nil, queue, errors.New("cannot dequeue from an empty queue")
@@ -25,15 +28,22 @@ func dequeue[T comparable](queue []*T) (*T, []*T, error) {
 	return removed, queue[1:], nil
 }
 
-func peakQueue[T comparable](queue []*T) *T {
-	return queue[0]
+/*
+This function converts an int64 (a 64-bit signed integer) to a slice of bytes in big-endian order.
+
+bytes := ToHex(1234567890)
+fmt.Println(bytes) // Output: [72, 144, 173, 205, 1, 0, 0, 0]
+*/
+func toHex(num int64) []byte {
+	buffer := new(bytes.Buffer)
+	if err := binary.Write(buffer, binary.BigEndian, num); err != nil {
+		log.Panic(err)
+	}
+
+	return buffer.Bytes()
 }
 
-func isQueueEmpty[T comparable](queue []*T) bool {
-	return len(queue) == 0
-}
-
-// Converting the transaction object to a JSON object.
+// MarshalJSON : Converting the transaction object to a JSON object.
 func (transaction *Transaction) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
 		Sender    string  `json:"sender"`
