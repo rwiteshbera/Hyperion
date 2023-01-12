@@ -2,6 +2,26 @@
 
 A blockchain project aims to implement the features of a blockchain system, such as adding new blocks through a proof of work process, verifying transactions and ensuring the security of the chain through cryptographic hashes, and safeguarding the information stored in the blocks. Additionally, it also aims to include a wallet feature that utilizes Elliptic Curve Digital Signature Algorithm (ECDSA) to generate private and public keys.
 
+Introducing **Hyperion** that has a wide range of advanced features including:
+
+✅ Utilizing a proof of work algorithm for adding new blocks.
+
+✅ Nonce generation to make the mining process more difficult and fair.
+
+✅ A visual representation of the blockchain on the server to make the process more transparent.
+
+✅ Create and execute new transactions.
+
+✅ Verifying transactions to ensure security.
+
+✅ Securing the data stored in the blocks through cryptographic hashes.
+
+✅ A built-in wallet system that utilizes Elliptic Curve Digital Signature Algorithm (ECDSA) for generating private and public keys.
+
+✅ The storage of wallet data is made more secure and efficient through the use of [BitCask](https://github.com/basho/bitcask), which is a high-performance storage engine that utilizes a log-structured hash table to quickly store and retrieve key/value data.
+
+✅ A Command Line Interface (CLI) to manage the wallet and run the blockchain network.
+
 ### Usage Guides
 - Create New Blockchain Wallet
 ```bash
